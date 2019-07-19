@@ -59,3 +59,10 @@ typings/
 
 # next.js build output
 .next
+/obj
+/kmk-node-sqlclient.njsproj.user
+/package-lock.json
+/.vs
+/bin
+/node_modules
+/kmk-mssqlclient.njsproj.user

@@ -1,0 +1,47 @@
+{
+	"name": "kmk-mssqlclient",
+	"version": "0.0.3",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"build": "tsc -p ./"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/neokamikai/kmk-node-sqlclient.git"
+	},
+	"keywords": [
+		"sql",
+		"mssql",
+		"client",
+		"database",
+		"db",
+		"node"
+	],
+	"author": {
+		"name": "kamikai",
+		"email": "kamikai@gmail.com",
+		"url": "https://github.com/neokamikai"
+	},
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/neokamikai/kmk-node-sqlclient/issues"
+	},
+	"readme": "README.md",
+	"types": "index.d.ts",
+	"directories": { "lib": "src" },
+	"files": [
+		"index.js","index.js.map",
+		"index.d.ts",
+		"src/sql.js","src/sql.js.map"
+
+	],
+	"homepage": "https://github.com/neokamikai/kmk-node-sqlclient#readme",
+	"dependencies": {
+		"mssql": "^5.1.0"
+	},
+	"devDependencies": {
+		"types": "^0.1.1",
+		"typescript": "^3.5.3"
+	}
+}
