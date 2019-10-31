@@ -1,12 +1,12 @@
 {
 	"compilerOptions": {
 		"noImplicitAny": false,
-		"allowJs": true,
 		"esModuleInterop": true,
 		"module": "commonjs",
 		"noEmitOnError": true,
 		"removeComments": false,
 		"sourceMap": true,
+		"declaration": true,
 		"target": "es5",
 		"lib": ["es2017", "scripthost", "dom"]
 	},

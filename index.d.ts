@@ -1,2 +1,1 @@
-export { };
-import { SqlClient } from './src/sql';
+export { SqlClient } from './src/sql';

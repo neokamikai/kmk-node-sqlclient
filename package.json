@@ -1,6 +1,6 @@
 {
 	"name": "kmk-mssqlclient",
-	"version": "0.0.3",
+	"version": "0.0.5",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
@@ -31,9 +31,8 @@
 	"types": "index.d.ts",
 	"directories": { "lib": "src" },
 	"files": [
-		"index.js","index.js.map",
-		"index.d.ts",
-		"src/sql.js","src/sql.js.map"
+		"index.js","index.js.map", "index.d.ts",
+		"src/sql.js","src/sql.js.map", "src/sql.d.ts"
 
 	],
 	"homepage": "https://github.com/neokamikai/kmk-node-sqlclient#readme",

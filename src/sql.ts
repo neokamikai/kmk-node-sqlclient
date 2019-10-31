@@ -115,7 +115,7 @@ export class SqlClient {
 	/**
 	 * Executes a query and returns a specific field (index or name) from the first row from the first rowSet for that query
 	 * @param sqlCommandStatement
-	 * @param index string: field name 
+	 * @param index string: field name
 	 * number: field index
 	 */
 	public async fetchColumn(sqlCommandStatement: string, index: number | string = 0) {
