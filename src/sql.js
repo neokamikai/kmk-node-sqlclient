@@ -240,7 +240,6 @@ var SqlClient = /** @class */ (function () {
         var preparedParameters = {};
         var limit = typeof top === 'number' && top > 0 ? " TOP (" + top + ")" : typeof topPercent === 'number' && topPercent > 0 ? " TOP (" + top + ") PERCENT" : '';
         var _loop_2 = function (param) {
-            //where.push(`[${param}] = @where_${param}`);
             var count = 0;
             where.push(generateSqlFieldComparison(param, parameters.where[param], function () {
                 var preparedParameter = "where_" + param + "_" + ++count;

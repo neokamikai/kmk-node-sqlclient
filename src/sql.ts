@@ -194,6 +194,7 @@ export class SqlClient {
 				preparedParameters[preparedParameter] = parameters.where[param];
 				return `@${preparedParameter}`;
 			}));
+		}
 		return this.queryPreparedStatement(`DELETE${limit} FROM ${typeof parameters.schemaName === 'string' ? '[' + parameters.schemaName + '].' : ''}[${parameters.tableName}] ${where.length === 0 ? '' : `WHERE (${where.join(') AND (')})`};`, preparedParameters);
 	}
 	/**
