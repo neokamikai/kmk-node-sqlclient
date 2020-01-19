@@ -1,3 +1,4 @@
+import * as sql from 'mssql';
 /**
  * Sql Query Result -> this is the raw result returned from mssql.ConnectionPool.request.query
  */
@@ -9,6 +10,72 @@ interface IQueryResult<T> {
 interface SqlClientOptions {
     encrypt: boolean;
 }
+interface InsertStatement<T> {
+    tableName: string;
+    schemaName?: string;
+    values: T | {
+        [id: string]: SqlFieldValue<any>;
+    };
+}
+interface UpdateStatement<T> {
+    tableName: string;
+    schemaName?: string;
+    set: T | {
+        [id: string]: SqlFieldValue<any>;
+    };
+    where?: T | {
+        [id: string]: SqlFieldCompare<any>;
+    };
+}
+export declare type SqlTypeNames = 'VARCHAR' | 'INT' | 'BIGINT' | 'NVARCHAR' | 'FLOAT' | 'DECIMAL' | 'MONEY' | 'NUMERIC' | 'CHAR' | 'DATE' | 'DATETIME';
+export declare type SqlFieldValue<T> = T | {
+    'cast': {
+        value: SqlFieldValue<T>;
+        as: SqlTypeNames;
+    };
+} | {
+    convert: {
+        type: SqlTypeNames;
+        value: SqlFieldValue<T>;
+        flag?: number;
+    };
+};
+export declare type SqlFieldCompare<T> = SqlFieldValue<T> | {
+    and: Array<SqlFieldCompare<T>>;
+} | {
+    or: Array<SqlFieldCompare<T>>;
+} | {
+    'is': null;
+} | {
+    'is not': null;
+} | {
+    'in': Array<SqlFieldValue<T>>;
+} | {
+    'between': [SqlFieldValue<T>, SqlFieldValue<T>];
+} | {
+    'not between': [T, T];
+} | {
+    'not in': Array<T>;
+} | {
+    '>': SqlFieldValue<T>;
+} | {
+    '<': SqlFieldValue<T>;
+} | {
+    '>=': SqlFieldValue<T>;
+} | {
+    '<=': SqlFieldValue<T>;
+} | {
+    'like': SqlFieldValue<T>;
+} | {
+    'not like': SqlFieldValue<T>;
+} | {
+    '!=': SqlFieldValue<T>;
+} | {
+    '<>': SqlFieldValue<T>;
+} | {
+    '=': SqlFieldValue<T>;
+};
+export declare type SqlFieldComparisonFieldName = SqlFieldValue<string>;
 export declare class SqlClientConfig {
     user: string;
     password: string;
@@ -33,6 +100,20 @@ export declare class SqlClient {
      * Executes a sql query and returns recordsets and rows affected
      */
     query<T>(sqlCommandStatement: string, ...optionalParams: any[]): Promise<IQueryResult<T>>;
+    /**
+     * name
+     */
+    queryInsert<T>(parameters: InsertStatement<T>): Promise<sql.IProcedureResult<unknown>>;
+    /**
+     * queryUpdate
+     */
+    queryUpdate<T>(parameters: UpdateStatement<T>): Promise<sql.IProcedureResult<unknown>>;
+    /**
+     * queryPreparedStatement
+     */
+    queryPreparedStatement<T>(sqlCommandStatement: any, parameters: {
+        [id: string]: SqlFieldValue<any>;
+    }): Promise<sql.IProcedureResult<T>>;
     /**
      * Executes a query and returns the first rowSet for that query
      * @param sqlCommandStatement
