@@ -43,6 +43,71 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var sql = __importStar(require("mssql"));
+function parseSqlFieldValue(fieldValue, finalValueCallback, useRawValue) {
+    if (useRawValue === void 0) { useRawValue = false; }
+    if (typeof fieldValue === 'object' && fieldValue !== null) {
+        if (!Array.isArray(fieldValue)) {
+            var op = Object.keys(fieldValue)[0];
+            switch (("" + op).toUpperCase()) {
+                case 'CAST':
+                    var _a = fieldValue[op], value = _a.value, as = _a.as;
+                    return "CAST(" + parseSqlFieldValue(value, finalValueCallback, useRawValue) + " AS " + as + ")";
+                case 'CONVERT': {
+                    var _b = fieldValue[op], type = _b.type, value_1 = _b.value, flag = _b.flag;
+                    return "CONVERT(" + [type, parseSqlFieldValue(value_1, finalValueCallback, useRawValue), flag].filter(function (a) { return typeof a !== 'undefined'; }) + ")";
+                }
+                default:
+                    break;
+            }
+        }
+    }
+    else if (useRawValue)
+        return fieldValue;
+    else
+        return finalValueCallback(fieldValue);
+}
+function generateSqlFieldComparison(fieldName, data, callback) {
+    callback = callback || (function (v) { return v; });
+    if (typeof data === 'undefined')
+        return '';
+    else if (data == null) {
+        return parseSqlFieldValue(fieldName, callback, true) + " IS " + parseSqlFieldValue(data, callback);
+    }
+    else if (typeof data === 'object') {
+        var $operator = Object.keys(data)[0];
+        switch ($operator) {
+            case 'and':
+            case 'or': {
+                return "(" + data[$operator].map(function (value) { return generateSqlFieldComparison(fieldName, value); }).join(" " + $operator.toUpperCase() + " ") + ")";
+            }
+            case 'in':
+            case 'not in':
+                return parseSqlFieldValue(fieldName, callback, true) + " " + $operator.toUpperCase() + " (" + data[$operator].map(function (e) { return parseSqlFieldValue(e, callback, false); }).join(', ') + ")";
+            case 'between':
+            case 'not between':
+                return parseSqlFieldValue(fieldName, callback, true) + " " + $operator.toUpperCase() + " " + parseSqlFieldValue(data[$operator][0], callback, false) + " AND " + parseSqlFieldValue(data[$operator][1], callback);
+            default:
+                return parseSqlFieldValue(fieldName, callback, true) + " " + $operator.toUpperCase() + " " + parseSqlFieldValue(data[$operator], callback, false);
+        }
+    }
+    else {
+        return parseSqlFieldValue(fieldName, callback, true) + " = " + parseSqlFieldValue(data, callback);
+    }
+}
+function getSqlType(value) {
+    if (value === null || typeof value === "string" || typeof value === 'undefined')
+        return sql.VarChar();
+    if (Object.getPrototypeOf(value) === Date.prototype)
+        return sql.DateTime();
+    if (typeof value === 'number')
+        return sql.Numeric;
+    if (typeof value === 'bigint')
+        return sql.BigInt;
+    if (typeof value === 'boolean')
+        return sql.Bit;
+    if (typeof value === 'object' || typeof value === 'symbol' || typeof value === 'function')
+        return sql.Variant;
+}
 var SqlClientConfig = /** @class */ (function () {
     function SqlClientConfig() {
     }
@@ -142,6 +207,100 @@ var SqlClient = /** @class */ (function () {
                     case 8: return [2 /*return*/];
                 }
             });
+        });
+    };
+    /**
+     * name
+     */
+    SqlClient.prototype.queryInsert = function (parameters) {
+        var preparedParameters = {};
+        var fields = [];
+        var values = [];
+        var table = (typeof parameters.schemaName === 'string' && parameters.schemaName ? "[" + parameters.schemaName + "].[" + parameters.tableName + "]" : "[" + parameters.tableName + "]").replace(/^\[+/, '[').replace(/^\]+/, ']');
+        var _loop_1 = function (param) {
+            var count = 0;
+            fields.push(("[" + param + "]").replace(/^\[+/, '[').replace(/^\]+/, ']'));
+            values.push(parseSqlFieldValue(param, function () {
+                var preparedParameter = param + "_" + ++count;
+                preparedParameters[preparedParameter] = parameters.values[param];
+                return "@" + preparedParameter;
+            }, false));
+        };
+        for (var param in parameters.values) {
+            _loop_1(param);
+        }
+        return this.queryPreparedStatement("INSERT INTO " + table + " (" + fields.join(', ') + ") VALUES (" + values.join(', ') + ");", parameters.values);
+    };
+    /**
+     * queryUpdate
+     */
+    SqlClient.prototype.queryUpdate = function (parameters) {
+        var set = [];
+        var where = [];
+        var preparedParameters = {};
+        var _loop_2 = function (param) {
+            //set.push(`[${param}] = @set_${param}`);
+            var count = 0;
+            set.push("[" + param + "] = " + parseSqlFieldValue(param, function () {
+                var preparedParameter = "set_" + param + "_" + ++count;
+                preparedParameters[preparedParameter] = parameters.where[param];
+                return "@" + preparedParameter;
+            }, false));
+        };
+        for (var param in parameters.set) {
+            _loop_2(param);
+        }
+        var _loop_3 = function (param) {
+            //where.push(`[${param}] = @where_${param}`);
+            var count = 0;
+            where.push(generateSqlFieldComparison(param, parameters.where[param], function () {
+                var preparedParameter = "where_" + param + "_" + ++count;
+                preparedParameters[preparedParameter] = parameters.where[param];
+                return "@" + preparedParameter;
+            }));
+        };
+        for (var param in parameters.where) {
+            _loop_3(param);
+        }
+        //const whereClause = (parameters.where ?Object.keys(parameters.where).map(f => generateSqlFieldComparison(f, parameters.where[f])).join(' AND '):'')||'1=1';
+        return this.queryPreparedStatement("UPDATE " + (typeof parameters.schemaName === 'string' ? '[' + parameters.schemaName + '].' : '') + "[" + parameters.tableName + "] SET " + set.join(', ') + " " + (where.length === 0 ? '' : "WHERE (" + where.join(') AND (') + ")") + ";", preparedParameters);
+    };
+    /**
+     * queryPreparedStatement
+     */
+    SqlClient.prototype.queryPreparedStatement = function (sqlCommandStatement, parameters) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            try {
+                var ps_1 = new sql.PreparedStatement(_this.connection);
+                for (var _i = 0, _a = parameters.values; _i < _a.length; _i++) {
+                    var paramName = _a[_i];
+                    var sqlType = getSqlType(parameters.values[paramName]);
+                    ps_1.input(paramName, sqlType);
+                }
+                ps_1.prepare(sqlCommandStatement, function (err) {
+                    // ... error checks
+                    if (err)
+                        return reject(err);
+                    ps_1.execute({ param: 12345 }, function (err, result) {
+                        // ... error checks
+                        if (err) {
+                            reject(err);
+                        }
+                        else
+                            resolve(result);
+                        // release the connection after queries are executed
+                        ps_1.unprepare(function (err) {
+                            // ... error checks
+                            if (err)
+                                return reject(err);
+                        });
+                    });
+                });
+            }
+            catch (e) {
+                reject(e);
+            }
         });
     };
     /**
