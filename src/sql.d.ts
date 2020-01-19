@@ -27,6 +27,17 @@ interface UpdateStatement<T> {
         [id: string]: SqlFieldCompare<any>;
     };
 }
+interface DeleteStatement<T> {
+    tableName: string;
+    schemaName?: string;
+    where?: T | {
+        [id: string]: SqlFieldCompare<any>;
+    };
+}
+interface DeleteStatementOptions {
+    top?: number;
+    topPercent?: number;
+}
 export declare type SqlTypeNames = 'VARCHAR' | 'INT' | 'BIGINT' | 'NVARCHAR' | 'FLOAT' | 'DECIMAL' | 'MONEY' | 'NUMERIC' | 'CHAR' | 'DATE' | 'DATETIME';
 export declare type SqlFieldValue<T> = T | {
     'cast': {
@@ -104,6 +115,10 @@ export declare class SqlClient {
      * name
      */
     queryInsert<T>(parameters: InsertStatement<T>): Promise<sql.IProcedureResult<unknown>>;
+    /**
+     * queryDelete
+     */
+    queryDelete<T>(parameters: DeleteStatement<T>, options?: DeleteStatementOptions): Promise<sql.IProcedureResult<unknown>>;
     /**
      * queryUpdate
      */
