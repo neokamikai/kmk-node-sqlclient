@@ -29,6 +29,7 @@ interface DeleteStatement<T> {
 }
 interface DeleteStatementOptions{
 	top?: number
+	topPercent?: number
 }
 interface UpdateSet {
 	[id: string]: any
@@ -183,8 +184,11 @@ export class SqlClient {
 	 */
 	public queryDelete<T>(parameters: DeleteStatement<T>, options?: DeleteStatementOptions) {
 		const where = [];
-		const { } = options || {};
+		const { top, topPercent } = options || {};
 		let preparedParameters = {};
+		let limit = typeof top === 'number' && top > 0?` TOP (${top})`:typeof top === 'number' && top > 0?` TOP (${top}) PERCENT`:'';
+
+
 		for (let param in (parameters.where as any)) {
 			//where.push(`[${param}] = @where_${param}`);
 			let count = 0;
@@ -196,7 +200,7 @@ export class SqlClient {
 		}
 
 		//const whereClause = (parameters.where ?Object.keys(parameters.where).map(f => generateSqlFieldComparison(f, parameters.where[f])).join(' AND '):'')||'1=1';
-		return this.queryPreparedStatement(`DELETE FROM ${typeof parameters.schemaName === 'string' ? '[' + parameters.schemaName + '].' : ''}[${parameters.tableName}] SET ${set.join(', ')} ${where.length === 0 ? '' : `WHERE (${where.join(') AND (')})`};`, preparedParameters);
+		return this.queryPreparedStatement(`DELETE${limit} FROM ${typeof parameters.schemaName === 'string' ? '[' + parameters.schemaName + '].' : ''}[${parameters.tableName}] SET ${set.join(', ')} ${where.length === 0 ? '' : `WHERE (${where.join(') AND (')})`};`, preparedParameters);
 	}
 	/**
 	 * queryUpdate
