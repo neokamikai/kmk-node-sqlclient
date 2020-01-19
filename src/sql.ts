@@ -22,6 +22,14 @@ interface UpdateStatement<T> {
 	set: T | { [id: string]: SqlFieldValue<any> };
 	where?: T | { [id: string]: SqlFieldCompare<any> };
 }
+interface DeleteStatement<T> {
+	tableName: string,
+	schemaName?: string,
+	where?: T | { [id: string]: SqlFieldCompare<any> };
+}
+interface DeleteStatementOptions{
+	top?: number
+}
 interface UpdateSet {
 	[id: string]: any
 }
@@ -169,6 +177,26 @@ export class SqlClient {
 			}, false));
 		}
 		return this.queryPreparedStatement(`INSERT INTO ${table} (${fields.join(', ')}) VALUES (${values.join(', ')});`, parameters.values);
+	}
+	/**
+	 * queryDelete
+	 */
+	public queryDelete<T>(parameters: DeleteStatement<T>, options?: DeleteStatementOptions) {
+		const where = [];
+		const { } = options || {};
+		let preparedParameters = {};
+		for (let param in (parameters.where as any)) {
+			//where.push(`[${param}] = @where_${param}`);
+			let count = 0;
+			where.push(generateSqlFieldComparison(param, parameters.where[param], () => {
+				const preparedParameter = `where_${param}_${++count}`;
+				preparedParameters[preparedParameter] = parameters.where[param];
+				return `@${preparedParameter}`;
+			}));
+		}
+
+		//const whereClause = (parameters.where ?Object.keys(parameters.where).map(f => generateSqlFieldComparison(f, parameters.where[f])).join(' AND '):'')||'1=1';
+		return this.queryPreparedStatement(`DELETE FROM ${typeof parameters.schemaName === 'string' ? '[' + parameters.schemaName + '].' : ''}[${parameters.tableName}] SET ${set.join(', ')} ${where.length === 0 ? '' : `WHERE (${where.join(') AND (')})`};`, preparedParameters);
 	}
 	/**
 	 * queryUpdate
