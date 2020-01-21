@@ -38,6 +38,17 @@ interface DeleteStatementOptions {
     top?: number;
     topPercent?: number;
 }
+interface DeleteStatement<T> {
+    tableName: string;
+    schemaName?: string;
+    where?: T | {
+        [id: string]: SqlFieldCompare<any>;
+    };
+}
+interface DeleteStatementOptions {
+    top?: number;
+    topPercent?: number;
+}
 export declare type SqlTypeNames = 'VARCHAR' | 'INT' | 'BIGINT' | 'NVARCHAR' | 'FLOAT' | 'DECIMAL' | 'MONEY' | 'NUMERIC' | 'CHAR' | 'DATE' | 'DATETIME';
 export declare type SqlFieldValue<T> = T | {
     'cast': {

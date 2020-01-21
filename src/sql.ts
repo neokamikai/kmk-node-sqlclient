@@ -7,7 +7,6 @@ interface IQueryResult<T> {
 	recordsets: Array<Array<any>>
 	rowsAffected: Array<number>
 }
-
 interface SqlClientOptions {
 	encrypt: boolean
 }
