@@ -254,8 +254,8 @@ export class SqlClient {
 		return new Promise<sql.IProcedureResult<T>>((resolve, reject) => {
 			try {
 				const ps = new sql.PreparedStatement(this.connection);
-				for (let paramName of parameters.values as any) {
-					const sqlType = getSqlType((parameters.values as any)[paramName]);
+				for (let paramName of parameters as any) {
+					const sqlType = getSqlType((parameters as any)[paramName]);
 					ps.input(paramName, sqlType);
 				}
 				ps.prepare(sqlCommandStatement, err => {

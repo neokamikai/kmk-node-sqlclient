@@ -304,9 +304,9 @@ var SqlClient = /** @class */ (function () {
         return new Promise(function (resolve, reject) {
             try {
                 var ps_1 = new sql.PreparedStatement(_this.connection);
-                for (var _i = 0, _a = parameters.values; _i < _a.length; _i++) {
+                for (var _i = 0, _a = parameters; _i < _a.length; _i++) {
                     var paramName = _a[_i];
-                    var sqlType = getSqlType(parameters.values[paramName]);
+                    var sqlType = getSqlType(parameters[paramName]);
                     ps_1.input(paramName, sqlType);
                 }
                 ps_1.prepare(sqlCommandStatement, function (err) {
