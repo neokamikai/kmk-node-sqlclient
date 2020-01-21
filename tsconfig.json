@@ -7,10 +7,12 @@
 		"removeComments": false,
 		"sourceMap": true,
 		"declaration": true,
+		"declarationMap": true,
 		"target": "es5",
 		"lib": ["es2017", "scripthost", "dom"]
 	},
 	"exclude": [
-		"node_modules"
+		"node_modules",
+		"sample"
 	]
 }

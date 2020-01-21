@@ -66,3 +66,4 @@ typings/
 /bin
 /node_modules
 /kmk-mssqlclient.njsproj.user
+/sample

@@ -101,7 +101,7 @@ export declare class SqlClient {
     private lastQueryResult;
     private connection;
     private instanceIndex;
-    static open: (config: SqlClientConfig, callback: (err: any, client: SqlClient) => {}) => void;
+    static open(config: SqlClientConfig, callback?: (err: any, client: SqlClient) => void): Promise<SqlClient>;
     setConfig(config: SqlClientConfig): void;
     private version;
     getVersion(): string;
@@ -170,3 +170,4 @@ export declare class SqlClient {
     constructor(config?: SqlClientConfig);
 }
 export default SqlClient;
+//# sourceMappingURL=sql.d.ts.map

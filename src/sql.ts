@@ -34,6 +34,15 @@ interface DeleteStatementOptions {
 interface UpdateSet {
 	[id: string]: any
 }
+interface DeleteStatement<T> {
+	tableName: string,
+	schemaName?: string,
+	where?: T | { [id: string]: SqlFieldCompare<any> };
+}
+interface DeleteStatementOptions {
+	top?: number
+	topPercent?: number
+}
 export type SqlTypeNames = 'VARCHAR' | 'INT' | 'BIGINT' | 'NVARCHAR' | 'FLOAT' | 'DECIMAL' | 'MONEY' | 'NUMERIC' | 'CHAR' | 'DATE' | 'DATETIME';
 
 export type SqlFieldValue<T> = T | { 'cast': { value: SqlFieldValue<T>, as: SqlTypeNames } } | { convert: { type: SqlTypeNames, value: SqlFieldValue<T>, flag?: number } };
@@ -110,7 +119,22 @@ export class SqlClient {
 	private lastQueryResult: IQueryResult<any>;
 	private connection: sql.ConnectionPool & { _connected: boolean };
 	private instanceIndex = ++sqlClientCounter;
-	static open: (config: SqlClientConfig, callback: (err: any, client: SqlClient) => {}) => void;
+	static open(config: SqlClientConfig, callback?: (err: any, client: SqlClient) => void) {
+		return new Promise<SqlClient>((resolve, reject) => {
+			let client = new SqlClient(config);
+			client.connect().then(() => {
+				if (typeof callback === 'function') {
+					callback(null, client); return resolve(client);
+				}
+				resolve(client);
+			}).catch(e => {
+				if (typeof callback === 'function') {
+					callback(e, null); return;
+				}
+				reject(e);
+			});
+		})
+	}
 	public setConfig(config: SqlClientConfig) {
 		this.config.user = config.user;
 		this.config.password = config.password;
@@ -127,17 +151,21 @@ export class SqlClient {
 
 	public getVersion() { return this.version; }
 	/** Connects to a MS SQL Server */
-	async connect() {
-		//console.log('Trying to connect ...', config);
-		if (this.connection && this.connection._connected)
-			throw new Error("Already connected.");
-		let that = this;
-		var _pool = new sql.ConnectionPool(this.config as any);
-		await _pool.connect().then(pool => {
-			console.log(`Connected to database [${(pool as any).config.database}] on server [${(pool as any).config.server}:${(pool as any).config.port}]`);
-			(that as any).connection = pool;
-		}).catch(err => { console.log('connection failre =>', err); });
-		this.version = await this.fetchColumn(`select @@VERSION 'version'`, 'version');
+	connect() {
+		return new Promise<void>((resolve, reject) => {
+			if (this.connection && this.connection._connected)
+				return reject(new Error("Already connected."));
+			let that = this;
+			var _pool = new sql.ConnectionPool(this.config as any);
+			_pool.connect().then(pool => {
+				console.log(`Connected to database [${(pool as any).config.database}] on server [${(pool as any).config.server}:${(pool as any).config.port}]`);
+				(that as any).connection = pool;
+				this.fetchColumn(`select @@VERSION 'version'`, 'version').then(value => {
+					this.version = value;
+					resolve();
+				}).catch(err => { reject(err); });
+			}).catch(err => { reject(err); });
+		});
 	}
 	/**
 	 * Executes a sql query and returns recordsets and rows affected
@@ -235,8 +263,8 @@ export class SqlClient {
 		return new Promise<sql.IProcedureResult<T>>((resolve, reject) => {
 			try {
 				const ps = new sql.PreparedStatement(this.connection);
-				for (let paramName of parameters.values as any) {
-					const sqlType = getSqlType((parameters.values as any)[paramName]);
+				for (let paramName of parameters as any) {
+					const sqlType = getSqlType((parameters as any)[paramName]);
 					ps.input(paramName, sqlType);
 				}
 				ps.prepare(sqlCommandStatement, err => {
@@ -338,11 +366,11 @@ export class SqlClient {
 
 	}
 }
-SqlClient.open = function (config: SqlClientConfig, callback: (err: any, client: SqlClient) => {}) {
-	(async (): Promise<SqlClient> => {
+/*SqlClient.open = function (config: SqlClientConfig, callback: (err: any, client: SqlClient) => {}) {
+	return (async (): Promise<SqlClient> => {
 		let client = new SqlClient(config);
 		await client.connect();
 		return client;
 	})().then(client => { callback(null, client); }).catch(e => { callback(e, null); });
-}
+}*/
 export default SqlClient;
