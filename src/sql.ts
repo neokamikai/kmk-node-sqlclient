@@ -25,6 +25,15 @@ interface UpdateStatement<T> {
 interface UpdateSet {
 	[id: string]: any
 }
+interface DeleteStatement<T> {
+	tableName: string,
+	schemaName?: string,
+	where?: T | { [id: string]: SqlFieldCompare<any> };
+}
+interface DeleteStatementOptions {
+	top?: number
+	topPercent?: number
+}
 export type SqlTypeNames = 'VARCHAR' | 'INT' | 'BIGINT' | 'NVARCHAR' | 'FLOAT' | 'DECIMAL' | 'MONEY' | 'NUMERIC' | 'CHAR' | 'DATE' | 'DATETIME';
 
 export type SqlFieldValue<T> = T | { 'cast': { value: SqlFieldValue<T>, as: SqlTypeNames } } | { convert: { type: SqlTypeNames, value: SqlFieldValue<T>, flag?: number } };
@@ -188,6 +197,24 @@ export class SqlClient {
 			}, false));
 		}
 		return this.queryPreparedStatement(`INSERT INTO ${table} (${fields.join(', ')}) VALUES (${values.join(', ')});`, parameters.values);
+	}
+	/**
+	 * queryDelete
+	 */
+	public queryDelete<T>(parameters: DeleteStatement<T>, options?: DeleteStatementOptions) {
+		const where = [];
+		const { top = 0, topPercent = 0 } = options || {};
+		let preparedParameters = {};
+		let limit = typeof top === 'number' && top > 0 ? ` TOP (${top})` : typeof topPercent === 'number' && topPercent > 0 ? ` TOP (${top}) PERCENT` : '';
+		for (let param in (parameters.where as any)) {
+			let count = 0;
+			where.push(generateSqlFieldComparison(param, parameters.where[param], () => {
+				const preparedParameter = `where_${param}_${++count}`;
+				preparedParameters[preparedParameter] = parameters.where[param];
+				return `@${preparedParameter}`;
+			}));
+		}
+		return this.queryPreparedStatement(`DELETE${limit} FROM ${typeof parameters.schemaName === 'string' ? '[' + parameters.schemaName + '].' : ''}[${parameters.tableName}] ${where.length === 0 ? '' : `WHERE (${where.join(') AND (')})`};`, preparedParameters);
 	}
 	/**
 	 * queryUpdate
