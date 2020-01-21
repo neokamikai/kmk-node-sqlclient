@@ -312,7 +312,7 @@ var SqlClient = /** @class */ (function () {
                     // ... error checks
                     if (err)
                         return reject(err);
-                    ps_1.execute({ param: 12345 }, function (err, result) {
+                    ps_1.execute(parameters, function (err, result) {
                         // ... error checks
                         if (err) {
                             reject(err);

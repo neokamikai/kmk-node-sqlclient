@@ -269,7 +269,7 @@ export class SqlClient {
 				ps.prepare(sqlCommandStatement, err => {
 					// ... error checks
 					if (err) return reject(err);
-					ps.execute({ param: 12345 }, (err, result) => {
+					ps.execute(parameters, (err, result) => {
 						// ... error checks
 						if (err) {
 							reject(err);
