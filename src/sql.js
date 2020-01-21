@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -125,6 +126,35 @@ var SqlClient = /** @class */ (function () {
         if (config)
             this.setConfig(config);
     }
+    SqlClient.open = function (config, callback) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            (function () { return __awaiter(_this, void 0, void 0, function () {
+                var client;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            client = new SqlClient(config);
+                            return [4 /*yield*/, client.connect()];
+                        case 1:
+                            _a.sent();
+                            if (typeof callback === 'function') {
+                                callback(null, client);
+                                return [2 /*return*/, null];
+                            }
+                            resolve(client);
+                            return [2 /*return*/];
+                    }
+                });
+            }); })().catch(function (e) {
+                if (typeof callback === 'function') {
+                    callback(e, null);
+                    return null;
+                }
+                reject(e);
+            });
+        });
+    };
     SqlClient.prototype.setConfig = function (config) {
         this.config.user = config.user;
         this.config.password = config.password;
@@ -455,21 +485,12 @@ var SqlClient = /** @class */ (function () {
     return SqlClient;
 }());
 exports.SqlClient = SqlClient;
-SqlClient.open = function (config, callback) {
-    var _this = this;
-    (function () { return __awaiter(_this, void 0, void 0, function () {
-        var client;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    client = new SqlClient(config);
-                    return [4 /*yield*/, client.connect()];
-                case 1:
-                    _a.sent();
-                    return [2 /*return*/, client];
-            }
-        });
-    }); })().then(function (client) { callback(null, client); }).catch(function (e) { callback(e, null); });
-};
+/*SqlClient.open = function (config: SqlClientConfig, callback: (err: any, client: SqlClient) => {}) {
+    return (async (): Promise<SqlClient> => {
+        let client = new SqlClient(config);
+        await client.connect();
+        return client;
+    })().then(client => { callback(null, client); }).catch(e => { callback(e, null); });
+}*/
 exports.default = SqlClient;
 //# sourceMappingURL=sql.js.map

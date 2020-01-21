@@ -101,7 +101,23 @@ export class SqlClient {
 	private lastQueryResult: IQueryResult<any>;
 	private connection: sql.ConnectionPool & { _connected: boolean };
 	private instanceIndex = ++sqlClientCounter;
-	static open: (config: SqlClientConfig, callback: (err: any, client: SqlClient) => {}) => void;
+	static open(config: SqlClientConfig, callback?: (err: any, client: SqlClient) => void) {
+		return new Promise<SqlClient>((resolve, reject) => {
+			(async (): Promise<SqlClient> => {
+				let client = new SqlClient(config);
+				await client.connect();
+				if (typeof callback === 'function') {
+					callback(null, client); return null;
+				}
+				resolve(client);
+			})().catch(e => {
+				if (typeof callback === 'function') {
+					callback(e, null); return null;
+				}
+				reject(e);
+			});
+		})
+	}
 	public setConfig(config: SqlClientConfig) {
 		this.config.user = config.user;
 		this.config.password = config.password;
@@ -311,11 +327,11 @@ export class SqlClient {
 
 	}
 }
-SqlClient.open = function (config: SqlClientConfig, callback: (err: any, client: SqlClient) => {}) {
-	(async (): Promise<SqlClient> => {
+/*SqlClient.open = function (config: SqlClientConfig, callback: (err: any, client: SqlClient) => {}) {
+	return (async (): Promise<SqlClient> => {
 		let client = new SqlClient(config);
 		await client.connect();
 		return client;
 	})().then(client => { callback(null, client); }).catch(e => { callback(e, null); });
-}
+}*/
 export default SqlClient;
