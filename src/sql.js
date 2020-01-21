@@ -239,7 +239,7 @@ var SqlClient = /** @class */ (function () {
         for (var param in parameters.values) {
             _loop_1(param);
         }
-        return this.queryPreparedStatement("INSERT INTO " + table + " (" + fields.join(', ') + ") VALUES (" + values.join(', ') + ");", parameters.values);
+        return this.queryPreparedStatement("INSERT INTO " + table + " (" + fields.join(', ') + ") VALUES (" + values.join(', ') + ");", preparedParameters);
     };
     /**
      * queryDelete
@@ -304,8 +304,7 @@ var SqlClient = /** @class */ (function () {
         return new Promise(function (resolve, reject) {
             try {
                 var ps_1 = new sql.PreparedStatement(_this.connection);
-                for (var _i = 0, _a = parameters; _i < _a.length; _i++) {
-                    var paramName = _a[_i];
+                for (var paramName in parameters) {
                     var sqlType = getSqlType(parameters[paramName]);
                     ps_1.input(paramName, sqlType);
                 }

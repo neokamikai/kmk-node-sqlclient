@@ -204,7 +204,7 @@ export class SqlClient {
 
 			}, false));
 		}
-		return this.queryPreparedStatement(`INSERT INTO ${table} (${fields.join(', ')}) VALUES (${values.join(', ')});`, parameters.values);
+		return this.queryPreparedStatement(`INSERT INTO ${table} (${fields.join(', ')}) VALUES (${values.join(', ')});`, preparedParameters);
 	}
 	/**
 	 * queryDelete
@@ -262,7 +262,7 @@ export class SqlClient {
 		return new Promise<sql.IProcedureResult<T>>((resolve, reject) => {
 			try {
 				const ps = new sql.PreparedStatement(this.connection);
-				for (let paramName of parameters as any) {
+				for (let paramName in parameters as any) {
 					const sqlType = getSqlType((parameters as any)[paramName]);
 					ps.input(paramName, sqlType);
 				}
