@@ -103,16 +103,15 @@ export class SqlClient {
 	private instanceIndex = ++sqlClientCounter;
 	static open(config: SqlClientConfig, callback?: (err: any, client: SqlClient) => void) {
 		return new Promise<SqlClient>((resolve, reject) => {
-			(async (): Promise<SqlClient> => {
-				let client = new SqlClient(config);
-				await client.connect();
+			let client = new SqlClient(config);
+			client.connect().then(() => {
 				if (typeof callback === 'function') {
-					callback(null, client); return null;
+					callback(null, client); return resolve(client);
 				}
 				resolve(client);
-			})().catch(e => {
+			}).catch(e => {
 				if (typeof callback === 'function') {
-					callback(e, null); return null;
+					callback(e, null); return;
 				}
 				reject(e);
 			});
@@ -134,17 +133,21 @@ export class SqlClient {
 
 	public getVersion() { return this.version; }
 	/** Connects to a MS SQL Server */
-	async connect() {
-		//console.log('Trying to connect ...', config);
-		if (this.connection && this.connection._connected)
-			throw new Error("Already connected.");
-		let that = this;
-		var _pool = new sql.ConnectionPool(this.config as any);
-		await _pool.connect().then(pool => {
-			console.log(`Connected to database [${(pool as any).config.database}] on server [${(pool as any).config.server}:${(pool as any).config.port}]`);
-			(that as any).connection = pool;
-		}).catch(err => { console.log('connection failre =>', err); });
-		this.version = await this.fetchColumn(`select @@VERSION 'version'`, 'version');
+	connect() {
+		return new Promise<void>((resolve, reject) => {
+			if (this.connection && this.connection._connected)
+				return reject(new Error("Already connected."));
+			let that = this;
+			var _pool = new sql.ConnectionPool(this.config as any);
+			_pool.connect().then(pool => {
+				console.log(`Connected to database [${(pool as any).config.database}] on server [${(pool as any).config.server}:${(pool as any).config.port}]`);
+				(that as any).connection = pool;
+				this.fetchColumn(`select @@VERSION 'version'`, 'version').then(value => {
+					this.version = value;
+					resolve();
+				}).catch(err => { reject(err); });
+			}).catch(err => { reject(err); });
+		});
 	}
 	/**
 	 * Executes a sql query and returns recordsets and rows affected

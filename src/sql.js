@@ -127,29 +127,18 @@ var SqlClient = /** @class */ (function () {
             this.setConfig(config);
     }
     SqlClient.open = function (config, callback) {
-        var _this = this;
         return new Promise(function (resolve, reject) {
-            (function () { return __awaiter(_this, void 0, void 0, function () {
-                var client;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            client = new SqlClient(config);
-                            return [4 /*yield*/, client.connect()];
-                        case 1:
-                            _a.sent();
-                            if (typeof callback === 'function') {
-                                callback(null, client);
-                                return [2 /*return*/, null];
-                            }
-                            resolve(client);
-                            return [2 /*return*/];
-                    }
-                });
-            }); })().catch(function (e) {
+            var client = new SqlClient(config);
+            client.connect().then(function () {
+                if (typeof callback === 'function') {
+                    callback(null, client);
+                    return resolve(client);
+                }
+                resolve(client);
+            }).catch(function (e) {
                 if (typeof callback === 'function') {
                     callback(e, null);
-                    return null;
+                    return;
                 }
                 reject(e);
             });
@@ -170,29 +159,20 @@ var SqlClient = /** @class */ (function () {
     SqlClient.prototype.getVersion = function () { return this.version; };
     /** Connects to a MS SQL Server */
     SqlClient.prototype.connect = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var that, _pool, _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        //console.log('Trying to connect ...', config);
-                        if (this.connection && this.connection._connected)
-                            throw new Error("Already connected.");
-                        that = this;
-                        _pool = new sql.ConnectionPool(this.config);
-                        return [4 /*yield*/, _pool.connect().then(function (pool) {
-                                console.log("Connected to database [" + pool.config.database + "] on server [" + pool.config.server + ":" + pool.config.port + "]");
-                                that.connection = pool;
-                            }).catch(function (err) { console.log('connection failre =>', err); })];
-                    case 1:
-                        _b.sent();
-                        _a = this;
-                        return [4 /*yield*/, this.fetchColumn("select @@VERSION 'version'", 'version')];
-                    case 2:
-                        _a.version = _b.sent();
-                        return [2 /*return*/];
-                }
-            });
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            if (_this.connection && _this.connection._connected)
+                return reject(new Error("Already connected."));
+            var that = _this;
+            var _pool = new sql.ConnectionPool(_this.config);
+            _pool.connect().then(function (pool) {
+                console.log("Connected to database [" + pool.config.database + "] on server [" + pool.config.server + ":" + pool.config.port + "]");
+                that.connection = pool;
+                _this.fetchColumn("select @@VERSION 'version'", 'version').then(function (value) {
+                    _this.version = value;
+                    resolve();
+                }).catch(function (err) { reject(err); });
+            }).catch(function (err) { reject(err); });
         });
     };
     /**
