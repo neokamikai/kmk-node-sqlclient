@@ -242,13 +242,34 @@ var SqlClient = /** @class */ (function () {
         return this.queryPreparedStatement("INSERT INTO " + table + " (" + fields.join(', ') + ") VALUES (" + values.join(', ') + ");", parameters.values);
     };
     /**
+     * queryDelete
+     */
+    SqlClient.prototype.queryDelete = function (parameters, options) {
+        var where = [];
+        var _a = options || {}, _b = _a.top, top = _b === void 0 ? 0 : _b, _c = _a.topPercent, topPercent = _c === void 0 ? 0 : _c;
+        var preparedParameters = {};
+        var limit = typeof top === 'number' && top > 0 ? " TOP (" + top + ")" : typeof topPercent === 'number' && topPercent > 0 ? " TOP (" + top + ") PERCENT" : '';
+        var _loop_2 = function (param) {
+            var count = 0;
+            where.push(generateSqlFieldComparison(param, parameters.where[param], function () {
+                var preparedParameter = "where_" + param + "_" + ++count;
+                preparedParameters[preparedParameter] = parameters.where[param];
+                return "@" + preparedParameter;
+            }));
+        };
+        for (var param in parameters.where) {
+            _loop_2(param);
+        }
+        return this.queryPreparedStatement("DELETE" + limit + " FROM " + (typeof parameters.schemaName === 'string' ? '[' + parameters.schemaName + '].' : '') + "[" + parameters.tableName + "] " + (where.length === 0 ? '' : "WHERE (" + where.join(') AND (') + ")") + ";", preparedParameters);
+    };
+    /**
      * queryUpdate
      */
     SqlClient.prototype.queryUpdate = function (parameters) {
         var set = [];
         var where = [];
         var preparedParameters = {};
-        var _loop_2 = function (param) {
+        var _loop_3 = function (param) {
             //set.push(`[${param}] = @set_${param}`);
             var count = 0;
             set.push("[" + param + "] = " + parseSqlFieldValue(param, function () {
@@ -258,9 +279,9 @@ var SqlClient = /** @class */ (function () {
             }, false));
         };
         for (var param in parameters.set) {
-            _loop_2(param);
+            _loop_3(param);
         }
-        var _loop_3 = function (param) {
+        var _loop_4 = function (param) {
             //where.push(`[${param}] = @where_${param}`);
             var count = 0;
             where.push(generateSqlFieldComparison(param, parameters.where[param], function () {
@@ -270,7 +291,7 @@ var SqlClient = /** @class */ (function () {
             }));
         };
         for (var param in parameters.where) {
-            _loop_3(param);
+            _loop_4(param);
         }
         //const whereClause = (parameters.where ?Object.keys(parameters.where).map(f => generateSqlFieldComparison(f, parameters.where[f])).join(' AND '):'')||'1=1';
         return this.queryPreparedStatement("UPDATE " + (typeof parameters.schemaName === 'string' ? '[' + parameters.schemaName + '].' : '') + "[" + parameters.tableName + "] SET " + set.join(', ') + " " + (where.length === 0 ? '' : "WHERE (" + where.join(') AND (') + ")") + ";", preparedParameters);
