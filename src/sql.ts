@@ -236,7 +236,7 @@ export class SqlClient {
 			let count = 0;
 			set.push(`[${param}] = ${parseSqlFieldValue(param, () => {
 				const preparedParameter = `set_${param}_${++count}`;
-				preparedParameters[preparedParameter] = parameters.where[param];
+				preparedParameters[preparedParameter] = parameters.set[param];
 				return `@${preparedParameter}`;
 
 			}, false)}`);

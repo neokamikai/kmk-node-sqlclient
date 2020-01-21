@@ -274,7 +274,7 @@ var SqlClient = /** @class */ (function () {
             var count = 0;
             set.push("[" + param + "] = " + parseSqlFieldValue(param, function () {
                 var preparedParameter = "set_" + param + "_" + ++count;
-                preparedParameters[preparedParameter] = parameters.where[param];
+                preparedParameters[preparedParameter] = parameters.set[param];
                 return "@" + preparedParameter;
             }, false));
         };
