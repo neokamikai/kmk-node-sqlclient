@@ -22,6 +22,15 @@ interface UpdateStatement<T> {
 	set: T | { [id: string]: SqlFieldValue<any> };
 	where?: T | { [id: string]: SqlFieldCompare<any> };
 }
+interface DeleteStatement<T> {
+	tableName: string,
+	schemaName?: string,
+	where?: T | { [id: string]: SqlFieldCompare<any> };
+}
+interface DeleteStatementOptions {
+	top?: number
+	topPercent?: number
+}
 interface UpdateSet {
 	[id: string]: any
 }
