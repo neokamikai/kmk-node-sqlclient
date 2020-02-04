@@ -239,7 +239,7 @@ var SqlClient = /** @class */ (function () {
         for (var param in parameters.values) {
             _loop_1(param);
         }
-        return this.queryPreparedStatement("INSERT INTO " + table + " (" + fields.join(', ') + ") VALUES (" + values.join(', ') + ");", parameters.values);
+        return this.queryPreparedStatement("INSERT INTO " + table + " (" + fields.join(', ') + ") VALUES (" + values.join(', ') + ");", preparedParameters);
     };
     /**
      * queryDelete
@@ -274,7 +274,7 @@ var SqlClient = /** @class */ (function () {
             var count = 0;
             set.push("[" + param + "] = " + parseSqlFieldValue(param, function () {
                 var preparedParameter = "set_" + param + "_" + ++count;
-                preparedParameters[preparedParameter] = parameters.where[param];
+                preparedParameters[preparedParameter] = parameters.set[param];
                 return "@" + preparedParameter;
             }, false));
         };
@@ -304,8 +304,7 @@ var SqlClient = /** @class */ (function () {
         return new Promise(function (resolve, reject) {
             try {
                 var ps_1 = new sql.PreparedStatement(_this.connection);
-                for (var _i = 0, _a = parameters; _i < _a.length; _i++) {
-                    var paramName = _a[_i];
+                for (var paramName in parameters) {
                     var sqlType = getSqlType(parameters[paramName]);
                     ps_1.input(paramName, sqlType);
                 }
@@ -313,7 +312,7 @@ var SqlClient = /** @class */ (function () {
                     // ... error checks
                     if (err)
                         return reject(err);
-                    ps_1.execute({ param: 12345 }, function (err, result) {
+                    ps_1.execute(parameters, function (err, result) {
                         // ... error checks
                         if (err) {
                             reject(err);

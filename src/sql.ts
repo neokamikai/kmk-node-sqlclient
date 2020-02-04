@@ -7,7 +7,6 @@ interface IQueryResult<T> {
 	recordsets: Array<Array<any>>
 	rowsAffected: Array<number>
 }
-
 interface SqlClientOptions {
 	encrypt: boolean
 }
@@ -21,6 +20,15 @@ interface UpdateStatement<T> {
 	schemaName?: string,
 	set: T | { [id: string]: SqlFieldValue<any> };
 	where?: T | { [id: string]: SqlFieldCompare<any> };
+}
+interface DeleteStatement<T> {
+	tableName: string,
+	schemaName?: string,
+	where?: T | { [id: string]: SqlFieldCompare<any> };
+}
+interface DeleteStatementOptions {
+	top?: number
+	topPercent?: number
 }
 interface UpdateSet {
 	[id: string]: any
@@ -196,7 +204,7 @@ export class SqlClient {
 
 			}, false));
 		}
-		return this.queryPreparedStatement(`INSERT INTO ${table} (${fields.join(', ')}) VALUES (${values.join(', ')});`, parameters.values);
+		return this.queryPreparedStatement(`INSERT INTO ${table} (${fields.join(', ')}) VALUES (${values.join(', ')});`, preparedParameters);
 	}
 	/**
 	 * queryDelete
@@ -228,7 +236,7 @@ export class SqlClient {
 			let count = 0;
 			set.push(`[${param}] = ${parseSqlFieldValue(param, () => {
 				const preparedParameter = `set_${param}_${++count}`;
-				preparedParameters[preparedParameter] = parameters.where[param];
+				preparedParameters[preparedParameter] = parameters.set[param];
 				return `@${preparedParameter}`;
 
 			}, false)}`);
@@ -254,14 +262,14 @@ export class SqlClient {
 		return new Promise<sql.IProcedureResult<T>>((resolve, reject) => {
 			try {
 				const ps = new sql.PreparedStatement(this.connection);
-				for (let paramName of parameters as any) {
+				for (let paramName in parameters as any) {
 					const sqlType = getSqlType((parameters as any)[paramName]);
 					ps.input(paramName, sqlType);
 				}
 				ps.prepare(sqlCommandStatement, err => {
 					// ... error checks
 					if (err) return reject(err);
-					ps.execute({ param: 12345 }, (err, result) => {
+					ps.execute(parameters, (err, result) => {
 						// ... error checks
 						if (err) {
 							reject(err);
