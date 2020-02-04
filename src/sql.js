@@ -482,6 +482,9 @@ var SqlClient = /** @class */ (function () {
     SqlClient.prototype.getLastsqlCommandStatement = function () {
         return this.lastCommandStatement;
     };
+    SqlClient.prototype.close = function () {
+        return this.connection.close();
+    };
     return SqlClient;
 }());
 exports.SqlClient = SqlClient;

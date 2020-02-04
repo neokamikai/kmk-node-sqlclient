@@ -178,6 +178,7 @@ export declare class SqlClient {
     executeNonQuery(sqlCommandStatement: string, ...optionalParams: any[]): Promise<number>;
     /** Returns the last sqlCommandStatement executed */
     getLastsqlCommandStatement(): string;
+    close(): Promise<void>;
     constructor(config?: SqlClientConfig);
 }
 export default SqlClient;

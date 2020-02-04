@@ -359,6 +359,9 @@ export class SqlClient {
 	public getLastsqlCommandStatement() {
 		return this.lastCommandStatement;
 	}
+	public close() {
+		return this.connection.close();
+	}
 	constructor(config: SqlClientConfig = null) {
 		if (config)
 			this.setConfig(config);
